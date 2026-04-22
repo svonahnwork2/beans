@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛋️ Couch Hunt — A Quest to Vanquish The Patient</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1510;--bg-card:#2a2318;--bg-card-dim:#1e1a13;
+  --gold:#d4a853;--gold-bright:#f0c96e;--copper:#b87333;
+  --deep-red:#8b2500;--blood-red:#a63222;--forest-green:#4a8c3f;
+  --cream:#e8dcc8;--text-sec:#b8a88a;--text-dim:#7a6e5a;
+  --border:#3a3228;
+}
+body{
+  background:var(--bg);color:var(--cream);
+  font-family:'Crimson Text',Georgia,serif;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.6;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-size:256px 256px;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.025;
+  background-image:linear-gradient(var(--gold) 1px,transparent 1px),linear-gradient(90deg,var(--gold) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+.app{position:relative;z-index:2;max-width:640px;margin:0 auto;min-height:100vh}
+
+/* Header */
+.header{padding:28px 16px 12px;background:linear-gradient(180deg,#231c12 0%,var(--bg) 100%);text-align:center}
+.header h1{
+  font-family:'Cinzel',serif;font-size:clamp(20px,5vw,26px);font-weight:800;
+  color:var(--gold);letter-spacing:3px;text-shadow:0 0 20px rgba(212,168,83,.2);
+  margin:0;
+}
+.header .subtitle{
+  font-size:14px;color:var(--text-dim);margin:4px 0 16px;font-style:italic;
+}
+.header .swords{color:var(--gold);font-size:18px}
+
+/* Progress bar */
+.progress-wrap{margin-bottom:16px}
+.progress-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.progress-label span:first-child{font-family:'Cinzel',serif;font-size:10px;color:var(--text-sec);letter-spacing:2px}
+.progress-label span:last-child{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);font-weight:700}
+.progress-track{position:relative;padding:0 12px}
+.progress-bar{width:100%;height:8px;background:var(--bg-card-dim);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.progress-fill{height:100%;background:linear-gradient(90deg,#2d5a27,var(--gold),var(--copper));border-radius:4px;transition:width .5s ease;box-shadow:0 0 6px rgba(212,168,83,.3)}
+.progress-dots{display:flex;justify-content:space-between;position:absolute;top:-3px;left:4px;right:4px}
+.progress-dot{width:14px;height:14px;border-radius:50%;transition:all .3s ease}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--bg) 0%,#1e1a13 100%)}
+.tab{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 8px;background:none;border:none;cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .2s ease;
+  font-family:'Cinzel',serif;font-size:11px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);
+}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab:hover{color:var(--text-sec)}
+
+/* Cards */
+.quest-card{
+  background:linear-gradient(135deg,var(--bg-card) 0%,var(--bg-card-dim) 100%);
+  border:1px solid var(--border);border-radius:4px;
+  box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(212,168,83,.05);
+  overflow:hidden;margin-bottom:12px;
+}
+.wanted-card{
+  background:linear-gradient(135deg,#2a1a12 0%,#1e1510 100%);
+  border:2px solid var(--deep-red);border-radius:4px;
+  box-shadow:0 4px 16px rgba(139,37,0,.2),inset 0 1px 0 rgba(139,37,0,.1);
+  position:relative;padding:16px;margin-bottom:16px;
+}
+.wanted-card::before{
+  content:"";position:absolute;top:-1px;left:50%;transform:translateX(-50%);
+  width:60px;height:3px;background:var(--deep-red);border-radius:0 0 4px 4px;
+}
+
+/* Decision items */
+.decision-header{
+  width:100%;display:flex;align-items:center;gap:10px;
+  padding:14px 16px;background:none;border:none;cursor:pointer;text-align:left;
+}
+.decision-body{padding:0 16px 16px;border-top:1px solid var(--border)}
+.decision-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700}
+.decision-subtitle{font-size:12px;color:var(--text-dim);margin-top:2px;font-style:italic}
+.decision-desc{font-size:14px;color:var(--text-sec);margin:12px 0;line-height:1.7}
+
+/* Waypoint timeline */
+.timeline-item{position:relative;padding-left:36px;margin-bottom:12px}
+.timeline-line{position:absolute;left:15px;top:0;bottom:-12px;width:2px;background:linear-gradient(180deg,rgba(212,168,83,.27),var(--border))}
+.waypoint{
+  position:absolute;left:4px;top:14px;width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-family:'Cinzel',serif;font-weight:700;z-index:2;
+}
+.waypoint.done{background:var(--forest-green);color:var(--bg)}
+.waypoint.active{background:var(--gold);color:var(--bg);box-shadow:0 0 8px rgba(212,168,83,.4)}
+.waypoint.locked{background:var(--border);color:var(--text-dim)}
+
+/* Status badges */
+.badge{
+  display:inline-block;padding:2px 10px;border-radius:12px;
+  font-size:9px;font-family:'Cinzel',serif;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+}
+.badge-green{color:var(--forest-green);border:1px solid var(--forest-green);background:rgba(45,90,39,.1)}
+.badge-gold{color:var(--gold-bright);border:1px solid var(--gold);background:rgba(212,168,83,.1)}
+.badge-copper{color:var(--copper);border:1px solid var(--copper);background:rgba(184,115,51,.1)}
+.badge-red{color:var(--blood-red);border:1px solid var(--blood-red);background:rgba(139,37,0,.1)}
+.badge-dim{color:var(--text-dim);border:1px solid var(--border);background:rgba(122,110,90,.05)}
+
+/* Feature badges */
+.feat-badge{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;
+  font-size:9px;font-family:'Cinzel',serif;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;
+}
+
+/* Item rows */
+.item-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0}
+.item-row.done{opacity:.6}
+.item-label{font-size:14px;color:var(--cream)}
+.item-label.done{color:var(--text-dim);text-decoration:line-through}
+.item-detail{font-size:12px;color:var(--text-dim);margin-top:2px;font-style:italic}
+.item-icon{margin-top:2px;flex-shrink:0;width:14px;height:14px}
+
+/* Couch compare grid */
+.couch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.couch-compare{padding:10px;font-size:12px}
+.couch-compare img{width:100%;height:100px;object-fit:cover;border-radius:4px;margin-bottom:8px}
+.couch-compare .name{font-family:'Cinzel',serif;font-weight:600;color:var(--cream);font-size:12px;margin-bottom:4px}
+.couch-compare .dims{color:var(--text-sec);line-height:1.5}
+.couch-compare .pros{color:var(--text-dim);font-size:11px;margin-top:4px;line-height:1.4}
+.couch-compare a{color:var(--gold);text-decoration:none;font-size:11px;display:inline-flex;align-items:center;gap:4px;margin-top:6px}
+.couch-compare a:hover{color:var(--gold-bright);text-decoration:underline}
+
+/* Outpost card */
+.outpost{
+  display:flex;align-items:center;gap:8px;padding:10px 12px;
+  background:rgba(184,115,51,.08);border:1px solid rgba(184,115,51,.2);
+  border-radius:4px;margin-bottom:12px;
+}
+.outpost .label{font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:var(--copper)}
+.outpost .addr{font-size:12px;color:var(--text-sec)}
+
+/* Blocker */
+.blocker{
+  display:flex;align-items:center;gap:6px;padding:8px 12px;
+  background:rgba(166,50,34,.07);border:1px solid rgba(166,50,34,.13);
+  border-radius:4px;margin-bottom:12px;font-size:12px;color:var(--blood-red);font-style:italic;
+}
+
+/* Fabric section */
+.fabric-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.fabric-header .title{font-size:10px;font-family:'Cinzel',serif;color:var(--gold);letter-spacing:3px}
+.fabric-header .count{font-size:11px;color:var(--text-dim);margin-left:auto}
+
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{
+  padding:6px 14px;border-radius:16px;font-family:'Cinzel',serif;
+  font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;transition:all .2s ease;border:1px solid var(--border);
+  background:var(--bg-card-dim);color:var(--text-dim);
+}
+.filter-btn:hover{border-color:var(--gold);color:var(--text-sec)}
+.filter-btn.active{border-color:var(--gold);background:rgba(212,168,83,.12);color:var(--gold-bright);box-shadow:0 0 8px rgba(212,168,83,.15)}
+
+/* Collection cards */
+.collection-header{
+  width:100%;display:flex;align-items:center;gap:12px;
+  padding:14px 16px;background:none;border:none;cursor:pointer;text-align:left;
+}
+.collection-body{padding:0 16px 16px;border-top:1px solid var(--border)}
+.collection-name{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--cream)}
+.collection-name.frontrunner{color:var(--gold-bright)}
+.collection-meta{font-size:12px;color:var(--copper);font-weight:600}
+
+/* Swatch grid */
+.swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
+.swatch{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:none;border:none;cursor:pointer;padding:4px;width:100%;
+  transition:transform .15s ease;
+}
+.swatch:hover{transform:scale(1.05)}
+.swatch-img-wrap{
+  width:100%;aspect-ratio:1;border-radius:6px;overflow:hidden;
+  border:1px solid var(--border);background:var(--bg-card-dim);transition:all .15s ease;
+}
+.swatch:hover .swatch-img-wrap{border-color:var(--gold);box-shadow:0 0 8px rgba(212,168,83,.25)}
+.swatch img{width:100%;height:100%;object-fit:cover;display:block}
+.swatch .color-name{font-size:11px;color:var(--text-sec);text-align:center;line-height:1.2}
+
+/* Lightbox */
+.lightbox{
+  position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:rgba(10,8,5,.92);backdrop-filter:blur(8px);
+}
+.lightbox-close{
+  position:absolute;top:16px;right:16px;background:rgba(58,50,40,.53);
+  border:1px solid var(--border);border-radius:50%;width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  color:var(--cream);font-size:18px;z-index:1001;
+}
+.lightbox img{max-width:90vw;max-height:70vh;border-radius:8px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.lightbox-caption{margin-top:16px;text-align:center}
+.lightbox-caption .name{font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--cream);margin-bottom:4px}
+.lightbox-caption .name.frontrunner{color:var(--gold-bright)}
+.lightbox-caption .meta{font-size:14px;color:var(--text-sec);margin-bottom:12px}
+.lightbox-nav{display:flex;gap:12px;justify-content:center}
+.lightbox-nav button{
+  padding:6px 16px;border-radius:16px;font-family:'Crimson Text',serif;
+  font-size:13px;cursor:pointer;border:1px solid var(--border);
+  background:rgba(30,26,19,.8);color:var(--text-sec);transition:all .2s ease;
+}
+.lightbox-nav button:hover{border-color:var(--gold);color:var(--gold-bright);background:rgba(42,35,24,.9)}
+
+/* Section label */
+.section-label{display:flex;align-items:center;gap:8px;margin-bottom:12px;margin-top:8px}
+.section-label span{font-size:10px;font-family:'Cinzel',serif;color:var(--gold);letter-spacing:3px}
+
+/* Cleaning row */
+.cleaning-row{display:flex;align-items:center;gap:6px;padding:10px 0 8px;font-size:11px;color:var(--text-dim)}
+
+/* Footer */
+.footer{text-align:center;padding:32px 16px;font-size:12px;color:var(--text-dim);font-style:italic}
+
+/* Responsive */
+@media(max-width:400px){
+  .couch-grid{grid-template-columns:1fr}
+  .swatch-grid{grid-template-columns:repeat(auto-fill,minmax(60px,1fr))}
+}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .4s ease forwards}
+.tab-content{padding:16px 16px 24px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px">
+      <span class="swords">⚔️</span>
+      <h1>COUCH HUNT</h1>
+      <span class="swords">🛡️</span>
+    </div>
+    <p class="subtitle">A quest to vanquish The Patient and claim a worthy throne</p>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>QUEST PROGRESS</span>
+        <span id="progress-pct">30%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width:30%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('quest')" id="tab-quest">📜 Quest Log</button>
+    <button class="tab" onclick="switchTab('fabrics')" id="tab-fabrics">🎨 Fabric Armory</button>
+  </div>
+
+  <!-- Quest Log Tab -->
+  <div class="tab-content fade-in" id="content-quest">
+    <!-- The Patient -->
+    <div class="wanted-card">
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--blood-red);letter-spacing:4px;opacity:.7">✦ QUEST OBJECTIVE ✦</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px">
+          <span>💀</span>
+          <span style="font-family:'Cinzel',serif;font-size:16px;color:var(--cream);font-weight:700;letter-spacing:2px">THE PATIENT</span>
+          <span>💀</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-dim);font-style:italic;margin-top:4px">Frame is broken, held up by books 📚</div>
+      </div>
+      <div style="width:100%;margin-bottom:12px;border-radius:4px;overflow:hidden;border:1px solid rgba(139,37,0,.27);background:#0e0a08">
+        <img src="images/current-couch.jpg" alt="The Patient — held up by books" style="width:100%;max-height:240px;object-fit:contain;display:block;filter:sepia(.4) brightness(.75) contrast(1.1)">
+      </div>
+      <div style="display:flex;gap:16px;font-size:13px;color:var(--text-sec);justify-content:center">
+        <span>84" W</span><span style="color:var(--text-dim)">•</span>
+        <span>36" D</span><span style="color:var(--text-dim)">•</span>
+        <span>33" H</span>
+      </div>
+    </div>
+
+    <!-- Quest Log -->
+    <div class="section-label">
+      <span>📜</span>
+      <span>QUEST LOG</span>
+    </div>
+
+    <!-- Decision I: Which Model? -->
+    <div class="timeline-item">
+      <div class="timeline-line"></div>
+      <div class="waypoint active">I</div>
+      <div class="quest-card">
+        <button class="decision-header" onclick="toggleDecision('model')">
+          <span style="font-size:20px">🛋️</span>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="decision-title" style="color:var(--cream)">Which Model?</span>
+              <span class="badge badge-green">ALMOST DONE</span>
+            </div>
+            <div class="decision-subtitle">Piper vs Natalie <span style="color:var(--text-sec);font-style:normal;margin-left:8px">4/5</span></div>
+          </div>
+          <span id="chevron-model" style="color:var(--text-dim);font-size:14px">▼</span>
+        </button>
+        <div class="decision-body" id="body-model">
+          <p class="decision-desc">Both fit your space. Now you need to feel them in person and check reviews.</p>
+          <!-- Couch comparison -->
+          <div class="couch-grid">
+            <div class="quest-card couch-compare">
+              <img src="images/couch-piper.png" alt="La-Z-Boy Piper">
+              <div class="name">Piper</div>
+              <div class="dims">82" × 37" × 37.5"</div>
+              <div class="pros">Slightly narrower, more modern look</div>
+              <a href="https://www.la-z-boy.com/p/living-room-sofas-stationary-sofas/piper-sofa/_/R-610620" target="_blank" rel="noopener">↗ View</a>
+            </div>
+            <div class="quest-card couch-compare">
+              <img src="images/couch-natalie.png" alt="La-Z-Boy Natalie">
+              <div class="name">Natalie</div>
+              <div class="dims">86" × 38" × 39"</div>
+              <div class="pros">Wider, traditional rolled arms, deeper seat</div>
+              <a href="https://www.la-z-boy.com/p/living-room-sofas-stationary-sofas/natalie-sofa/_/R-610491" target="_blank" rel="noopener">↗ View</a>
+            </div>
+          </div>
+          <!-- Model items -->
+          <div style="margin-top:8px">
+            <div class="item-row done"><span class="item-icon" style="color:var(--forest-green)">✓</span><div><div class="item-label done">Dimensions comparison</div><div class="item-detail">Both fit — at least 2" to spare each direction</div></div></div>
+            <div class="item-row done"><span class="item-icon" style="color:var(--forest-green)">✓</span><div><div class="item-label done">Piper: 82"W × 37"D × 37.5"H</div><div class="item-detail">2" narrower than The Patient, slightly more modern</div></div></div>
+            <div class="item-row done"><span class="item-icon" style="color:var(--forest-green)">✓</span><div><div class="item-label done">Natalie: 86"W × 38"D × 39"H</div><div class="item-detail">2" wider, traditional rolled arms, deeper seat</div></div></div>
+            <div class="item-row done"><span class="item-icon" style="color:var(--forest-green)">✓</span><div><div class="item-label done">Online reviews & comparisons</div><div class="item-detail">Natalie leads: better napping, more durable fabric, proven track record. Piper: $290 cheaper, modern look. Lovesac ruled out (no white glove).</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--blood-red)">🔒</span><div><div class="item-label">In-person sit test</div><div class="item-detail">Blocked until store visit</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision II: What Fabric? -->
+    <div class="timeline-item">
+      <div class="timeline-line"></div>
+      <div class="waypoint active">II</div>
+      <div class="quest-card">
+        <button class="decision-header" onclick="toggleDecision('fabric')">
+          <span style="font-size:20px">🧵</span>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="decision-title" style="color:var(--cream)">What Fabric?</span>
+              <span class="badge badge-gold">RESEARCHING</span>
+            </div>
+            <div class="decision-subtitle">Cloth — but which kind? <span style="color:var(--text-sec);font-style:normal;margin-left:8px">4/7</span></div>
+          </div>
+          <span id="chevron-fabric" style="color:var(--text-dim);font-size:14px">▼</span>
+        </button>
+        <div class="decision-body" id="body-fabric">
+          <p class="decision-desc">You know cloth not leather. La-Z-Boy has tons of fabric options — durability, texture, color.</p>
+          <div class="blocker"><span>🔒</span> Requires: store_visit</div>
+          <div style="margin-top:8px">
+            <div class="item-row done"><span class="item-icon" style="color:var(--forest-green)">✓</span><div><div class="item-label done">Cloth only, no leather</div><div class="item-detail">That much we know!</div></div></div>
+            <div class="item-row done"><span class="item-icon" style="color:var(--forest-green)">✓</span><div><div class="item-label done">Filter to 12 non-chenille, water-cleanable fabrics</div><div class="item-detail">Started with 65 fabrics, ruled out chenille, boucle, velvet, linen, dry solvent. 12 collections remain.</div></div></div>
+            <div class="item-row done"><span class="item-icon" style="color:var(--forest-green)">✓</span><div><div class="item-label done">Narrow to 3 swatch frontrunners</div><div class="item-detail">Thane (Performance knit, $2,029), Persia (padded backing, $2,029), Milo (Performance tight weave, $2,249)</div></div></div>
+            <div class="item-row done"><span class="item-icon" style="color:var(--forest-green)">✓</span><div><div class="item-label done">Order 3 free swatches</div><div class="item-detail">Ordered! Thane Smoke (C203554), Persia Desert (C186036), Milo Teal (D169398). ETA: 2-3 weeks 🫠</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Pick color family</div><div class="item-detail">Leaning grey/neutral but Milo Teal is the wildcard 👀</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--blood-red)">🔒</span><div><div class="item-label">Revise frontrunners after swatches arrive</div><div class="item-detail">Compare swatches against apartment lighting + current couch. Narrow down or swap before store visit. (~May 10)</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--blood-red)">🔒</span><div><div class="item-label">Final fabric decision at store</div><div class="item-detail">Feel the full range in person, confirm color + texture choice</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision III: The Store Visit -->
+    <div class="timeline-item">
+      <div class="timeline-line"></div>
+      <div class="waypoint active">III</div>
+      <div class="quest-card">
+        <button class="decision-header" onclick="toggleDecision('store')">
+          <span style="font-size:20px">📍</span>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="decision-title" style="color:var(--cream)">The Store Visit</span>
+              <span class="badge badge-copper">PLANNING</span>
+            </div>
+            <div class="decision-subtitle">La-Z-Boy Emeryville <span style="color:var(--text-sec);font-style:normal;margin-left:8px">0/5</span></div>
+          </div>
+          <span id="chevron-store" style="color:var(--text-dim);font-size:14px">▸</span>
+        </button>
+        <div class="decision-body hidden" id="body-store">
+          <p class="decision-desc">5800 Christie Ave, Emeryville CA 94608. The big field trip that unblocks everything.</p>
+          <div class="outpost">
+            <span style="font-size:16px">📍</span>
+            <div>
+              <div class="label">The Emeryville Outpost</div>
+              <div class="addr">La-Z-Boy · 5800 Christie Ave, Emeryville CA 94608</div>
+            </div>
+          </div>
+          <div style="margin-top:8px">
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Know what to look for</div><div class="item-detail">What questions to ask, what to test</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Figure out transportation</div><div class="item-detail">Uber from Rincon Hill, ~15-20 min</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Ask about high-rise delivery</div><div class="item-detail">22nd floor, elevator access, haul-away</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Consider bringing a friend</div><div class="item-detail">Second opinion always nice!</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Pick a date to go</div><div class="item-detail">Weekend probably best</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision IV: The Purchase -->
+    <div class="timeline-item">
+      <div class="timeline-line"></div>
+      <div class="waypoint locked">IV</div>
+      <div class="quest-card" style="opacity:.5">
+        <button class="decision-header" onclick="toggleDecision('purchase')">
+          <span style="font-size:20px">💳</span>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="decision-title" style="color:var(--text-dim)">The Purchase</span>
+              <span class="badge badge-dim">LOCKED</span>
+            </div>
+            <div class="decision-subtitle">Pull the trigger <span style="color:var(--text-sec);font-style:normal;margin-left:8px">0/4</span></div>
+          </div>
+          <span id="chevron-purchase" style="color:var(--text-dim);font-size:14px">▸</span>
+        </button>
+        <div class="decision-body hidden" id="body-purchase">
+          <p class="decision-desc">Once model + fabric are locked in. Can you order online after visiting?</p>
+          <div class="blocker"><span>🔒</span> Requires: model, fabric</div>
+          <div style="margin-top:8px">
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Confirm ordering method</div><div class="item-detail">In-store vs online after visit?</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--blood-red)">🔒</span><div><div class="item-label">Lock in model choice</div><div class="item-detail">Need store visit first</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--blood-red)">🔒</span><div><div class="item-label">Lock in fabric choice</div><div class="item-detail">Need store visit first</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Check lead time</div><div class="item-detail">How long from order to delivery?</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision V: The Patient's Funeral -->
+    <div class="timeline-item">
+      <div class="timeline-line"></div>
+      <div class="waypoint locked">V</div>
+      <div class="quest-card" style="opacity:.5">
+        <button class="decision-header" onclick="toggleDecision('delivery')">
+          <span style="font-size:20px">💀</span>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="decision-title" style="color:var(--text-dim)">The Patient's Funeral</span>
+              <span class="badge badge-dim">LOCKED</span>
+            </div>
+            <div class="decision-subtitle">Delivery & removal <span style="color:var(--text-sec);font-style:normal;margin-left:8px">0/4</span></div>
+          </div>
+          <span id="chevron-delivery" style="color:var(--text-dim);font-size:14px">▸</span>
+        </button>
+        <div class="decision-body hidden" id="body-delivery">
+          <p class="decision-desc">22nd floor, elevator building. White glove delivery + haul away The Patient.</p>
+          <div class="blocker"><span>🔒</span> Requires: purchase</div>
+          <div style="margin-top:8px">
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Confirm white glove delivery</div><div class="item-detail">They bring it in, set it up</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Confirm old couch haul-away</div><div class="item-detail">Part of delivery or separate?</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Coordinate elevator access</div><div class="item-detail">Building might need advance notice</div></div></div>
+            <div class="item-row"><span class="item-icon" style="color:var(--text-dim)">○</span><div><div class="item-label">Clear path for delivery day</div><div class="item-detail">Move stuff, hold elevator</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fabric Armory Tab -->
+  <div class="tab-content hidden" id="content-fabrics">
+    <div class="fabric-header">
+      <span>🎨</span>
+      <span class="title">FABRIC ARMORY</span>
+      <span class="count" id="fabric-count">12 collections · 54 swatches</span>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterFabrics('all')" id="filter-all">All</button>
+      <button class="filter-btn" onclick="filterFabrics('C')" id="filter-C">Grade C · $2,029</button>
+      <button class="filter-btn" onclick="filterFabrics('D')" id="filter-D">Grade D · $2,249</button>
+    </div>
+
+    <div id="fabric-collections"></div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox hidden" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <div onclick="event.stopPropagation()">
+      <img id="lightbox-img" src="" alt="">
+    </div>
+    <div class="lightbox-caption" onclick="event.stopPropagation()">
+      <div class="name" id="lightbox-name"></div>
+      <div class="meta" id="lightbox-meta"></div>
+      <div class="lightbox-nav">
+        <button onclick="navLightbox(-1)" id="lightbox-prev">← Prev</button>
+        <button onclick="navLightbox(1)" id="lightbox-next">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Snapshot from Sarah's Couch Hunt · April 2025
+  </div>
+</div>
+
+<script>
+// ─── Fabric Data ───────────────────────────────────────────────
+const COLLECTIONS = [
+  {
+    name:"Thane", grade:"C", price:2029, fabricType:"Printed Knit",
+    cleaning:"Water/Dry", performance:true, stainResistant:true, iclean:false, frontrunner:true,
+    swatches:[
+      {color:"Charcoal",file:"thane-charcoal.jpg"},
+      {color:"Chocolate",file:"thane-chocolate.jpg"},
+      {color:"Linen",file:"thane-linen.jpg"},
+      {color:"Smoke",file:"thane-smoke.jpg"}
+    ]
+  },
+  {
+    name:"Persia", grade:"C", price:2029, fabricType:"Padded Backing",
+    cleaning:"Water/Dry", performance:false, stainResistant:false, iclean:false, frontrunner:true,
+    swatches:[
+      {color:"Bark",file:"persia-bark.jpg"},
+      {color:"Desert",file:"persia-desert.jpg"},
+      {color:"Greystone",file:"persia-greystone.jpg"},
+      {color:"Lake",file:"persia-lake.jpg"},
+      {color:"Wine",file:"persia-wine.jpg"}
+    ]
+  },
+  {
+    name:"Milo", grade:"D", price:2249, fabricType:"Tight Weave",
+    cleaning:"Water/Dry", performance:true, stainResistant:true, iclean:false, frontrunner:true,
+    swatches:[
+      {color:"Camel",file:"milo-camel.jpg"},
+      {color:"Mauve",file:"milo-mauve.jpg"},
+      {color:"Russet",file:"milo-russet.jpg"},
+      {color:"Sunflower",file:"milo-sunflower.jpg"},
+      {color:"Teal",file:"milo-teal.jpg"}
+    ]
+  },
+  {
+    name:"Lynx", grade:"C", price:2029, fabricType:"Jacquard Weave",
+    cleaning:"Water/Dry", performance:false, stainResistant:false, iclean:false, frontrunner:false,
+    swatches:[
+      {color:"Birch",file:"lynx-birch.jpg"},
+      {color:"Burlap",file:"lynx-burlap.jpg"},
+      {color:"Cement",file:"lynx-cement.jpg"},
+      {color:"Cream",file:"lynx-cream.jpg"}
+    ]
+  },
+  {
+    name:"Duffey", grade:"C", price:2029, fabricType:"Printed Knit",
+    cleaning:"Water Care", performance:false, stainResistant:false, iclean:false, frontrunner:false,
+    swatches:[
+      {color:"Dove",file:"duffey-dove.jpg"},
+      {color:"Fog",file:"duffey-fog.jpg"},
+      {color:"Hazel",file:"duffey-hazel.jpg"},
+      {color:"Oat",file:"duffey-oat.jpg"}
+    ]
+  },
+  {
+    name:"Secondary", grade:"C", price:2029, fabricType:"Herringbone",
+    cleaning:"Water Care", performance:false, stainResistant:false, iclean:false, frontrunner:false,
+    swatches:[
+      {color:"Oat",file:"secondary-oat.jpg"}
+    ]
+  },
+  {
+    name:"iClean Hallandale", grade:"D", price:2249, fabricType:"iClean Performance",
+    cleaning:"Water Care", performance:true, stainResistant:true, iclean:true, frontrunner:false,
+    swatches:[
+      {color:"1",file:"i-hallandale-1.jpg"},
+      {color:"2",file:"i-hallandale-2.jpg"},
+      {color:"3",file:"i-hallandale-3.jpg"},
+      {color:"4",file:"i-hallandale-4.jpg"},
+      {color:"5",file:"i-hallandale-5.jpg"}
+    ]
+  },
+  {
+    name:"iClean Halifax", grade:"D", price:2249, fabricType:"iClean Woven Pile",
+    cleaning:"Water Care", performance:true, stainResistant:true, iclean:true, frontrunner:false,
+    swatches:[
+      {color:"1",file:"i-halifax-1.jpg"},
+      {color:"2",file:"i-halifax-2.jpg"},
+      {color:"3",file:"i-halifax-3.jpg"},
+      {color:"4",file:"i-halifax-4.jpg"},
+      {color:"5",file:"i-halifax-5.jpg"}
+    ]
+  },
+  {
+    name:"iClean Rene", grade:"D", price:2249, fabricType:"Fine Texture",
+    cleaning:"Water/Dry", performance:false, stainResistant:false, iclean:true, frontrunner:false,
+    swatches:[
+      {color:"1",file:"i-rene-1.jpg"},
+      {color:"2",file:"i-rene-2.jpg"},
+      {color:"3",file:"i-rene-3.jpg"},
+      {color:"4",file:"i-rene-4.jpg"},
+      {color:"5",file:"i-rene-5.jpg"},
+      {color:"6",file:"i-rene-6.jpg"},
+      {color:"7",file:"i-rene-7.jpg"}
+    ]
+  },
+  {
+    name:"iClean Rockport", grade:"D", price:2249, fabricType:"Organic Texture",
+    cleaning:"Water/Dry", performance:false, stainResistant:false, iclean:true, frontrunner:false,
+    swatches:[
+      {color:"1",file:"i-rockport-1.jpg"},
+      {color:"2",file:"i-rockport-2.jpg"},
+      {color:"3",file:"i-rockport-3.jpg"},
+      {color:"4",file:"i-rockport-4.jpg"},
+      {color:"5",file:"i-rockport-5.jpg"}
+    ]
+  },
+  {
+    name:"iClean Nolina", grade:"D", price:2249, fabricType:"Basket Weave",
+    cleaning:"Water Care", performance:false, stainResistant:false, iclean:true, frontrunner:false,
+    swatches:[
+      {color:"1",file:"i-nolina-1.jpg"},
+      {color:"2",file:"i-nolina-2.jpg"},
+      {color:"3",file:"i-nolina-3.jpg"},
+      {color:"4",file:"i-nolina-4.jpg"},
+      {color:"5",file:"i-nolina-5.jpg"}
+    ]
+  },
+  {
+    name:"Defender", grade:"D", price:2249, fabricType:"Textured",
+    cleaning:"Unknown", performance:true, stainResistant:true, iclean:false, frontrunner:false,
+    swatches:[
+      {color:"1",file:"defender-1.jpg"},
+      {color:"2",file:"defender-2.jpg"},
+      {color:"3",file:"defender-3.jpg"},
+      {color:"4",file:"defender-4.jpg"}
+    ]
+  }
+];
+
+// ─── State ─────────────────────────────────────────────────────
+let currentFilter = "all";
+let lightboxState = null; // {collIdx, swatchIdx}
+let openDecisions = new Set(["model","fabric"]);
+
+// ─── Tab switching ─────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById("content-quest").classList.toggle("hidden", tab !== "quest");
+  document.getElementById("content-fabrics").classList.toggle("hidden", tab !== "fabrics");
+  document.getElementById("tab-quest").classList.toggle("active", tab === "quest");
+  document.getElementById("tab-fabrics").classList.toggle("active", tab === "fabrics");
+  if (tab === "fabrics") renderFabrics();
+}
+
+// ─── Decision toggle ───────────────────────────────────────────
+function toggleDecision(key) {
+  const body = document.getElementById("body-" + key);
+  const chevron = document.getElementById("chevron-" + key);
+  if (!body) return;
+  const isOpen = !body.classList.contains("hidden");
+  body.classList.toggle("hidden", isOpen);
+  if (chevron) chevron.textContent = isOpen ? "▸" : "▼";
+}
+
+// ─── Fabric filtering ──────────────────────────────────────────
+function filterFabrics(grade) {
+  currentFilter = grade;
+  ["all","C","D"].forEach(g => {
+    document.getElementById("filter-"+g).classList.toggle("active", g === grade);
+  });
+  renderFabrics();
+}
+
+// ─── Render fabric collections ─────────────────────────────────
+function renderFabrics() {
+  const container = document.getElementById("fabric-collections");
+  const filtered = currentFilter === "all" ? COLLECTIONS : COLLECTIONS.filter(c => c.grade === currentFilter);
+  const totalSwatches = filtered.reduce((a,c) => a + c.swatches.length, 0);
+  document.getElementById("fabric-count").textContent = filtered.length + " collections · " + totalSwatches + " swatches";
+
+  container.innerHTML = filtered.map((coll, ci) => {
+    const actualIdx = COLLECTIONS.indexOf(coll);
+    const isExpanded = coll.frontrunner;
+    const borderStyle = coll.frontrunner ? "border:1px solid rgba(212,168,83,.27);box-shadow:0 0 16px rgba(212,168,83,.07),inset 0 1px 0 rgba(212,168,83,.08)" : "";
+
+    let badges = "";
+    if (coll.frontrunner) badges += '<span class="feat-badge" style="color:var(--gold);border:1px solid rgba(212,168,83,.27);background:rgba(212,168,83,.07)">⭐ Frontrunner</span> ';
+    if (coll.performance) badges += '<span class="feat-badge" style="color:var(--forest-green);border:1px solid rgba(74,140,63,.27);background:rgba(74,140,63,.07)">🛡️ Performance</span> ';
+    if (coll.stainResistant) badges += '<span class="feat-badge" style="color:#5b9bd5;border:1px solid rgba(91,155,213,.27);background:rgba(91,155,213,.07)">💧 Stain Resistant</span> ';
+    if (coll.iclean) badges += '<span class="feat-badge" style="color:var(--copper);border:1px solid rgba(184,115,51,.27);background:rgba(184,115,51,.07)">✨ iClean</span> ';
+
+    const swatchHtml = coll.swatches.map((sw, si) => `
+      <button class="swatch" onclick="openLightbox(${actualIdx},${si})" title="${coll.name} — ${sw.color}">
+        <div class="swatch-img-wrap">
+          <img src="fabrics/${sw.file}" alt="${coll.name} ${sw.color}" loading="lazy">
+        </div>
+        <span class="color-name">${sw.color}</span>
+      </button>
+    `).join("");
+
+    return `
+      <div class="quest-card" style="${borderStyle}">
+        <button class="collection-header" onclick="toggleCollection(this)">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+              <span class="collection-name ${coll.frontrunner?'frontrunner':''}">${coll.name}</span>
+              ${badges}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:12px;color:var(--copper);font-weight:600">$${coll.price.toLocaleString()}</span>
+              <span style="color:var(--text-dim);font-size:10px">•</span>
+              <span style="font-size:11px;color:var(--text-dim)">Grade ${coll.grade}</span>
+              <span style="color:var(--text-dim);font-size:10px">•</span>
+              <span style="font-size:11px;color:var(--text-sec)">${coll.fabricType}</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <span style="font-size:11px;color:var(--text-dim)">${coll.swatches.length}</span>
+            <span style="color:var(--text-dim);font-size:14px" class="coll-chevron">${isExpanded?'▼':'▸'}</span>
+          </div>
+        </button>
+        <div class="collection-body ${isExpanded?'':'hidden'}">
+          <div class="cleaning-row">💧 ${coll.cleaning}</div>
+          <div class="swatch-grid">${swatchHtml}</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function toggleCollection(btn) {
+  const body = btn.nextElementSibling;
+  const chevron = btn.querySelector(".coll-chevron");
+  if (!body) return;
+  const isOpen = !body.classList.contains("hidden");
+  body.classList.toggle("hidden", isOpen);
+  if (chevron) chevron.textContent = isOpen ? "▸" : "▼";
+}
+
+// ─── Lightbox ──────────────────────────────────────────────────
+function openLightbox(collIdx, swatchIdx) {
+  lightboxState = {collIdx, swatchIdx};
+  updateLightbox();
+  document.getElementById("lightbox").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  document.getElementById("lightbox").classList.add("hidden");
+  document.body.style.overflow = "";
+  lightboxState = null;
+}
+
+function navLightbox(dir) {
+  if (!lightboxState) return;
+  const coll = COLLECTIONS[lightboxState.collIdx];
+  const newIdx = lightboxState.swatchIdx + dir;
+  if (newIdx >= 0 && newIdx < coll.swatches.length) {
+    lightboxState.swatchIdx = newIdx;
+    updateLightbox();
+  }
+}
+
+function updateLightbox() {
+  if (!lightboxState) return;
+  const coll = COLLECTIONS[lightboxState.collIdx];
+  const sw = coll.swatches[lightboxState.swatchIdx];
+  document.getElementById("lightbox-img").src = "fabrics/" + sw.file;
+  document.getElementById("lightbox-img").alt = coll.name + " " + sw.color;
+  const nameEl = document.getElementById("lightbox-name");
+  nameEl.textContent = coll.name;
+  nameEl.className = "name" + (coll.frontrunner ? " frontrunner" : "");
+  document.getElementById("lightbox-meta").textContent = sw.color + " · $" + coll.price.toLocaleString() + " · Grade " + coll.grade;
+  document.getElementById("lightbox-prev").style.display = lightboxState.swatchIdx > 0 ? "" : "none";
+  document.getElementById("lightbox-next").style.display = lightboxState.swatchIdx < coll.swatches.length - 1 ? "" : "none";
+}
+
+// Keyboard nav
+document.addEventListener("keydown", function(e) {
+  if (!lightboxState) return;
+  if (e.key === "Escape") closeLightbox();
+  if (e.key === "ArrowLeft") navLightbox(-1);
+  if (e.key === "ArrowRight") navLightbox(1);
+});
+</script>
+</body>
+</html>
